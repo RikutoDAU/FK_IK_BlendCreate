@@ -12,7 +12,14 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
     def __init__(self):
         super().__init__()
         self.chainList = []
-        self.plusNameList = ["FK","IK","Mid"]
+        self.plusNameList = ["FK","IK","Mid"]   #名前は仮置き中
+
+        self.jointFK = []
+        self.jointIK = []
+        self.jointMID = []
+
+        self.ikCTL = "ik_Ctl_Base"  #名前は仮置き中
+        self.fkCTL = "fk_Ctl_Base"
 
     def getSelectJoint(self):
         isSelection = cmds.ls(selection=True, type='joint')
@@ -76,6 +83,45 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
 
         print("新しいジョイントリスト" , newChainList)
         return newChainList
+    
+    def ikHandleCtlCreate(self):
+
+        ikCtl = self.ikCTL
+        startJointIK = self.jointIK[0]
+        endJointIK = self.jointIK[-1]
+
+        ikHandle = cmds.ikHandle(startJoint = startJointIK, endEffector = endJointIK , solver="ikRPsolver", name = self.jointIK[0] + "_IKhandle")[0]
+        
+        if not cmds.objExists(ikCtl):
+            cmds.error(ikCtl,"が存在しません")
+    
+        copyCtl = cmds.duplicate(ikCtl, name=endJointIK + "_CTL")[0]
+
+        snapConst = cmds.pointConstraint(endJointIK, copyCtl, maintainOffset=False)[0]
+        cmds.delete(snapConst)
+        cmds.parent(ikHandle,copyCtl)
+
+    def fkCtlCreate(self):
+
+        #newfkCntChain = []
+        fkCtl = self.fkCTL
+        beforeCnt = None
+
+        for i in self.jointFK:
+
+            jointFkCnt = cmds.duplicate(fkCtl, name=i+ "_CTL")[0]
+
+            group = cmds.group(jointFkCnt, name=i + "_GRP")
+
+            snapConst = cmds.parentConstraint(i , group, mo=False)[0]
+            cmds.delete(snapConst)
+
+            if beforeCnt:
+                cmds.parent(group, beforeCnt)
+
+            cmds.parentConstraint(jointFkCnt, i, mo=True)
+
+            beforeCnt = jointFkCnt
 
     def doIt(self ,args):        
 
@@ -84,19 +130,23 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
         for i,plusNames in enumerate(self.plusNameList):
 
             if i == 0:
-                jointFK = self.duplicateJoint(plusNames)
+                self.jointFK = self.duplicateJoint(plusNames)
 
             elif i == 1:
-                jointIK = self.duplicateJoint(plusNames)
+                self.jointIK = self.duplicateJoint(plusNames)
             
             elif i == 2:
-                jointMID = self.duplicateJoint(plusNames)
+                self.jointMID = self.duplicateJoint(plusNames)
             
             else:
                 break
-        
-        print()
-        return jointFK,jointIK,jointMID
+
+        self.ikHandleCtlCreate()
+        self.fkCtlCreate()
+
+
+
+        return self.jointFK, self.jointIK, self.jointMID
 
 FK_IK_BlendRigCreate().doIt(None)
 
