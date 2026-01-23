@@ -21,6 +21,8 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
         self.ikCTL = "ik_Ctl_Base"  #名前は仮置き中
         self.fkCTL = "fk_Ctl_Base"
 
+        self.switchCTL = "switch1"
+
     def getSelectJoint(self):
         isSelection = cmds.ls(selection=True, type='joint')
 
@@ -109,7 +111,7 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
 
         for i in self.jointFK:
 
-            jointFkCnt = cmds.duplicate(fkCtl, name=i+ "_CTL")[0]
+            jointFkCnt = cmds.duplicate(fkCtl, name=i + "_CTL")[0]
 
             group = cmds.group(jointFkCnt, name=i + "_GRP")
 
@@ -122,6 +124,34 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
             cmds.parentConstraint(jointFkCnt, i, mo=True)
 
             beforeCnt = jointFkCnt
+
+    def fkIkblend(self):
+
+        switchCTL = self.switchCTL
+        if not cmds.objExists(switchCTL):
+            cmds.error(switchCTL,"が存在しません")
+
+        for i, jnt in enumerate(self.jointMID):
+            
+            bmNode = cmds.createNode('blendMatrix', name=jnt + "_bm")
+
+            cmds.connectAttr(self.jointFK[i] + ".matrix", bmNode + ".inputMatrix")
+            cmds.connectAttr(self.jointIK[i] + ".matrix", bmNode + ".target[0].targetMatrix")
+            cmds.connectAttr(bmNode + ".outputMatrix", self.jointMID[i] + ".offsetParentMatrix")
+
+            attrName = jnt + "IKratio"
+
+            cmds.addAttr(switchCTL, longName=attrName, attributeType="double", min=0, max=1, keyable=True)
+
+            bmAttr = switchCTL + "." + attrName
+            cmds.connectAttr(bmAttr, bmNode + ".target[0].weight")
+
+            #MIDの移動、回転、ジョイント方向の値を0にする。MIDが複製された際の数値が入った状態のままだと、その数値が乗算された行列になってそう。
+            cmds.setAttr(jnt+".translate",0,0,0)
+            cmds.setAttr(jnt+".rotate",0,0,0)
+            cmds.setAttr(jnt+".jointOrient",0,0,0)
+        
+        
 
     def doIt(self ,args):        
 
@@ -143,6 +173,7 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
 
         self.ikHandleCtlCreate()
         self.fkCtlCreate()
+        self.fkIkblend()
 
 
 
