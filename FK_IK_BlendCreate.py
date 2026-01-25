@@ -1,6 +1,8 @@
 import maya.api.OpenMaya as om
 import maya.cmds as cmds
 
+from PySide6 import QtWidgets, QtCore
+
 # API2.0 を有効にする
 def maya_useNewAPI():
     pass
@@ -178,8 +180,38 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
 
 
         return self.jointFK, self.jointIK, self.jointMID
+    
+class guiWindow(QtWidgets.QDialog):
+    
+    def __init__(self):
+        super().__init__()
+        
+        self.logicClass = FK_IK_BlendRigCreate
 
-FK_IK_BlendRigCreate().doIt(None)
+
+        self.setWindowTitle("FK,IK,BlendRigCreate")
+        self.resize(400,400)
 
 
+        self.windowLayout = QtWidgets.QVBoxLayout(self)
+        self.windowLayout.setSpacing(10)
+
+        
+        self.title = QtWidgets.QLabel("指定するジョイントを選択")
+        self.createButton = QtWidgets.QPushButton("create FK,IK,MID")
+
+        self.windowLayout.addWidget(self.title)
+        self.windowLayout.addWidget(self.createButton)
+
+        self.createButton.clicked.connect(self.clickedCreateButton)
+        
+    def clickedCreateButton(self):
+
+        FK_IK_BlendRigCreate().doIt(None)
+       
+
+#FK_IK_BlendRigCreate().doIt(None)
+
+openWindow = guiWindow()
+openWindow.show()
 
