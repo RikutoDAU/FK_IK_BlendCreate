@@ -143,8 +143,8 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
 
             attrName = jnt + "IKratio"
 
-            if cmds.objExists(switchCTL.attrName):
-                cmds.deleteAttr(switchCTL.attrName)
+            if cmds.objExists(switchCTL + "." + attrName):
+                cmds.deleteAttr(switchCTL + "." + attrName)
 
             cmds.addAttr(switchCTL, longName=attrName, attributeType="double", min=0, max=1, keyable=True)
 
@@ -180,19 +180,24 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
         self.fkCtlCreate()
         self.fkIkblend()
 
+        #cmds.deleteUI(guiWindow.windowName, window=True)
 
         cmds.undoInfo(closeChunk=True)
         return self.jointFK, self.jointIK, self.jointMID
     
 class guiWindow(qw.QDialog):
     
+    windowName = "FK,IK,BlendRigCreate"
+
     def __init__(self, parent=None):
         super().__init__(parent)
         
+        
+
         self.logicClass = FK_IK_BlendRigCreate
 
         self.setWindowFlags(self.windowFlags() | qc.Qt.WindowStaysOnTopHint)
-        self.setWindowTitle("FK,IK,BlendRigCreate")
+        self.setWindowTitle(self.windowName)
         self.resize(400,400)
 
 
@@ -212,12 +217,14 @@ class guiWindow(qw.QDialog):
         self.inputIkCtlName.setPlaceholderText("指定するIKコントローラーの名前を入力")
         self.layout.addWidget(self.inputIkCtlName)
 
-        #コントローラーをエクスプローラーから参照
-        self.referenceFkButton = qw.QPushButton("aiファイルから参照")
-        self.referenceIkButton = qw.QPushButton("aiファイルから参照")
+        #コントローラーをエクスプローラーから参照ボタン
+        self.referenceFkButton = qw.QPushButton("FK用コントローラーをaiファイルから参照")
+        self.referenceIkButton = qw.QPushButton("IK用コントローラーをaiファイルから参照")
 
+        #実行ボタン
         self.createButton = qw.QPushButton("create FK,IK,MID")
 
+        #ウィンドウに表示
         self.layout.addWidget(self.title)
         self.layout.addWidget(self.referenceFkButton)
         self.layout.addWidget(self.referenceIkButton)
@@ -231,16 +238,18 @@ class guiWindow(qw.QDialog):
     def importByExplorer(self, bool):
         
         if bool:
-            failFk = qw.QFileDialog.getOpenFileName(self, "aiファイルを選択", "", "aiファイル(*.ai)")
+            failFk = qw.QFileDialog.getOpenFileName(self, "FK:aiファイルを選択", "", "aiファイル(*.ai)")
             self.inputFkCtlName.setPlaceholderText("参照済み")
             pathNodeFk = cmds.file(failFk[0], i=True, type="Adobe(R) Illustrator(R)", returnNewNodes=True)
-            self.inputFkCtlName = pathNodeFk[0]
+            
+            #cmds.rename(pathNodeFk,"")
+            self.inputFkCtlName.setText(pathNodeFk[0])
 
         else:
-            failIk = qw.QFileDialog.getOpenFileName(self, "aiファイルを選択", "", "aiファイル(*.ai)")
+            failIk = qw.QFileDialog.getOpenFileName(self, "IK:aiファイルを選択", "", "aiファイル(*.ai)")
             self.inputIkCtlName.setPlaceholderText("参照済み")
             pathNodeIk = cmds.file(failIk[0], i=True, type="Adobe(R) Illustrator(R)", returnNewNodes=True)
-            self.inputIkCtlName = pathNodeIk[0]
+            self.inputIkCtlName.setText(pathNodeIk[0])
         
         
 
@@ -253,11 +262,15 @@ class guiWindow(qw.QDialog):
         cmds.undoInfo(openChunk=True)
 
         #self.logicClass(self.inputFkCtlName.text(), self.inputIkCtlName.text()).doIt(None)
-        self.logicClass(self.inputFkCtlName, self.inputIkCtlName).doIt(None)
+        self.logicClass(self.inputFkCtlName.text(), self.inputIkCtlName.text()).doIt(None)
+
+        self.close()
        
 
 #FK_IK_BlendRigCreate().doIt(None)
 
 openWindow = guiWindow()
+
+openWindow.setObjectName(openWindow.windowName)
 openWindow.show()
 
