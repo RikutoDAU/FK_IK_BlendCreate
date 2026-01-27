@@ -101,7 +101,10 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
     
         copyCtl = cmds.duplicate(ikCtl, name=endJointIK + "_CTL")[0]
 
-        snapConst = cmds.pointConstraint(endJointIK, copyCtl, maintainOffset=False)[0]
+        group = cmds.group(copyCtl, name=copyCtl + "_GRP")
+
+
+        snapConst = cmds.pointConstraint(endJointIK, group, maintainOffset=False)[0]
         cmds.delete(snapConst)
         cmds.parent(ikHandle,copyCtl)
 
@@ -242,14 +245,16 @@ class guiWindow(qw.QDialog):
             self.inputFkCtlName.setPlaceholderText("参照済み")
             pathNodeFk = cmds.file(failFk[0], i=True, type="Adobe(R) Illustrator(R)", returnNewNodes=True)
             
-            #cmds.rename(pathNodeFk,"")
-            self.inputFkCtlName.setText(pathNodeFk[0])
+            baseNameFk = cmds.rename(pathNodeFk[0],"Fk_Ctl_Base")
+            self.inputFkCtlName.setText(baseNameFk)
 
         else:
             failIk = qw.QFileDialog.getOpenFileName(self, "IK:aiファイルを選択", "", "aiファイル(*.ai)")
             self.inputIkCtlName.setPlaceholderText("参照済み")
             pathNodeIk = cmds.file(failIk[0], i=True, type="Adobe(R) Illustrator(R)", returnNewNodes=True)
-            self.inputIkCtlName.setText(pathNodeIk[0])
+
+            baseNameIk = cmds.rename(pathNodeIk[0],"Ik_Ctl_Base")
+            self.inputIkCtlName.setText(baseNameIk)
         
         
 
