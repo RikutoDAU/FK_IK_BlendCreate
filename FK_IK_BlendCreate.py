@@ -1,7 +1,7 @@
 import maya.api.OpenMaya as om
 import maya.cmds as cmds
 
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets as qw ,QtCore as qc
 
 # API2.0 を有効にする
 def maya_useNewAPI():
@@ -11,17 +11,17 @@ def maya_useNewAPI():
 
 class FK_IK_BlendRigCreate(om.MPxCommand):
 
-    def __init__(self):
+    def __init__(self, fkCtlName, ikCtlName):
         super().__init__()
         self.chainList = []
-        self.plusNameList = ["FK","IK","Mid"]   #名前は仮置き中
+        self.plusNameList = ["FK","IK","Mid"]
 
         self.jointFK = []
         self.jointIK = []
         self.jointMID = []
 
-        self.ikCTL = "ik_Ctl_Base"  #名前は仮置き中
-        self.fkCTL = "fk_Ctl_Base"
+        self.fkCTL = fkCtlName
+        self.ikCTL = ikCtlName
 
         self.switchCTL = "switch1"
 
@@ -143,6 +143,9 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
 
             attrName = jnt + "IKratio"
 
+            if cmds.objExists(switchCTL.attrName):
+                cmds.deleteAttr(switchCTL.attrName)
+
             cmds.addAttr(switchCTL, longName=attrName, attributeType="double", min=0, max=1, keyable=True)
 
             bmAttr = switchCTL + "." + attrName
@@ -178,36 +181,79 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
         self.fkIkblend()
 
 
-
+        cmds.undoInfo(closeChunk=True)
         return self.jointFK, self.jointIK, self.jointMID
     
-class guiWindow(QtWidgets.QDialog):
+class guiWindow(qw.QDialog):
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         
         self.logicClass = FK_IK_BlendRigCreate
 
-
+        self.setWindowFlags(self.windowFlags() | qc.Qt.WindowStaysOnTopHint)
         self.setWindowTitle("FK,IK,BlendRigCreate")
         self.resize(400,400)
 
 
-        self.windowLayout = QtWidgets.QVBoxLayout(self)
-        self.windowLayout.setSpacing(10)
+        self.layout = qw.QVBoxLayout(self)
+        self.layout.setSpacing(10)
 
         
-        self.title = QtWidgets.QLabel("指定するジョイントを選択")
-        self.createButton = QtWidgets.QPushButton("create FK,IK,MID")
+        self.title = qw.QLabel("指定するジョイント間を親→子の順で2つ選択(CTRL + L_Click)")
 
-        self.windowLayout.addWidget(self.title)
-        self.windowLayout.addWidget(self.createButton)
+        #使用FKコントローラーの指定(名前)
+        self.inputFkCtlName = qw.QLineEdit()
+        self.inputFkCtlName.setPlaceholderText("指定するFKコントローラーの名前を入力")
+        self.layout.addWidget(self.inputFkCtlName)
 
+        #使用IKコントローラーの指定(名前)
+        self.inputIkCtlName = qw.QLineEdit()
+        self.inputIkCtlName.setPlaceholderText("指定するIKコントローラーの名前を入力")
+        self.layout.addWidget(self.inputIkCtlName)
+
+        #コントローラーをエクスプローラーから参照
+        self.referenceFkButton = qw.QPushButton("aiファイルから参照")
+        self.referenceIkButton = qw.QPushButton("aiファイルから参照")
+
+        self.createButton = qw.QPushButton("create FK,IK,MID")
+
+        self.layout.addWidget(self.title)
+        self.layout.addWidget(self.referenceFkButton)
+        self.layout.addWidget(self.referenceIkButton)
+        self.layout.addWidget(self.createButton)
+
+        self.referenceFkButton.clicked.connect(lambda: self.importByExplorer(True))
+        self.referenceIkButton.clicked.connect(lambda: self.importByExplorer(False))
         self.createButton.clicked.connect(self.clickedCreateButton)
+
+        
+    def importByExplorer(self, bool):
+        
+        if bool:
+            failFk = qw.QFileDialog.getOpenFileName(self, "aiファイルを選択", "", "aiファイル(*.ai)")
+            self.inputFkCtlName.setPlaceholderText("参照済み")
+            pathNodeFk = cmds.file(failFk[0], i=True, type="Adobe(R) Illustrator(R)", returnNewNodes=True)
+            self.inputFkCtlName = pathNodeFk[0]
+
+        else:
+            failIk = qw.QFileDialog.getOpenFileName(self, "aiファイルを選択", "", "aiファイル(*.ai)")
+            self.inputIkCtlName.setPlaceholderText("参照済み")
+            pathNodeIk = cmds.file(failIk[0], i=True, type="Adobe(R) Illustrator(R)", returnNewNodes=True)
+            self.inputIkCtlName = pathNodeIk[0]
+        
+        
+
+        
+        
+        
         
     def clickedCreateButton(self):
+        
+        cmds.undoInfo(openChunk=True)
 
-        FK_IK_BlendRigCreate().doIt(None)
+        #self.logicClass(self.inputFkCtlName.text(), self.inputIkCtlName.text()).doIt(None)
+        self.logicClass(self.inputFkCtlName, self.inputIkCtlName).doIt(None)
        
 
 #FK_IK_BlendRigCreate().doIt(None)
