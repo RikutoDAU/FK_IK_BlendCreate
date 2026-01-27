@@ -7,12 +7,12 @@ from PySide6 import QtWidgets as qw ,QtCore as qc
 def maya_useNewAPI():
     pass
 
-#selection = om.MGlobal.getActiveSelectionList()
-
 class FK_IK_BlendRigCreate(om.MPxCommand):
 
     def __init__(self, fkCtlName, ikCtlName):
         super().__init__()
+
+        #
         self.chainList = []
         self.plusNameList = ["FK","IK","Mid"]
 
@@ -183,10 +183,7 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
         self.fkCtlCreate()
         self.fkIkblend()
 
-        #cmds.deleteUI(guiWindow.windowName, window=True)
-
-        #cmds.undoInfo(closeChunk=True)
-        return self.jointFK, self.jointIK, self.jointMID
+        return #self.jointFK, self.jointIK, self.jointMID
     
 class guiWindow(qw.QDialog):
     
@@ -207,8 +204,11 @@ class guiWindow(qw.QDialog):
         self.layout = qw.QVBoxLayout(self)
         self.layout.setSpacing(10)
 
-        
-        self.title = qw.QLabel("指定するジョイント間を親→子の順で2つ選択(CTRL + L_Click)")
+        explainText = (
+            "指定するジョイント間を親→子の順で2つ選択(CTRL + L_Click)\n"
+            "illustratorから追加するコントローラーのサイズはインポート後にcreateする前に調整してください。"
+            )
+        self.explain = qw.QLabel(explainText)
 
         #使用FKコントローラーの指定(名前)
         self.inputFkCtlName = qw.QLineEdit()
@@ -221,14 +221,14 @@ class guiWindow(qw.QDialog):
         self.layout.addWidget(self.inputIkCtlName)
 
         #コントローラーをエクスプローラーから参照ボタン
-        self.referenceFkButton = qw.QPushButton("FK用コントローラーをaiファイルから参照")
-        self.referenceIkButton = qw.QPushButton("IK用コントローラーをaiファイルから参照")
+        self.referenceFkButton = qw.QPushButton("FK用コントローラーをaiファイルからインポートして参照")
+        self.referenceIkButton = qw.QPushButton("IK用コントローラーをaiファイルからインポートして参照")
 
         #実行ボタン
         self.createButton = qw.QPushButton("create FK,IK,MID")
 
         #ウィンドウに表示
-        self.layout.addWidget(self.title)
+        self.layout.addWidget(self.explain)
         self.layout.addWidget(self.referenceFkButton)
         self.layout.addWidget(self.referenceIkButton)
         self.layout.addWidget(self.createButton)
@@ -267,9 +267,9 @@ class guiWindow(qw.QDialog):
         cmds.undoInfo(openChunk=True)
 
         try:
-            #self.logicClass(self.inputFkCtlName.text(), self.inputIkCtlName.text()).doIt(None)
             self.logicClass(self.inputFkCtlName.text(), self.inputIkCtlName.text()).doIt(None)
 
+        
         except Exception:
             cmds.undoInfo(closeChunk=True)
             cmds.undo()
