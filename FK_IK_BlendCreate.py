@@ -9,10 +9,9 @@ def maya_useNewAPI():
 
 class FK_IK_BlendRigCreate(om.MPxCommand):
 
-    def __init__(self, fkCtlName, ikCtlName):
+    def __init__(self, fkCtlName, ikCtlName, swicthCtlName):
         super().__init__()
 
-        #
         self.chainList = []
         self.plusNameList = ["FK","IK","Mid"]
 
@@ -23,7 +22,7 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
         self.fkCTL = fkCtlName
         self.ikCTL = ikCtlName
 
-        self.switchCTL = "switch1"
+        self.switchCTL = swicthCtlName
 
     def getSelectJoint(self):
         isSelection = cmds.ls(selection=True, type='joint')
@@ -212,17 +211,23 @@ class guiWindow(qw.QDialog):
 
         #使用FKコントローラーの指定(名前)
         self.inputFkCtlName = qw.QLineEdit()
-        self.inputFkCtlName.setPlaceholderText("指定するFKコントローラーの名前を入力")
+        self.inputFkCtlName.setPlaceholderText("指定するFKコントローラーの名前を入力 又はドラッグ")
         self.layout.addWidget(self.inputFkCtlName)
 
         #使用IKコントローラーの指定(名前)
         self.inputIkCtlName = qw.QLineEdit()
-        self.inputIkCtlName.setPlaceholderText("指定するIKコントローラーの名前を入力")
+        self.inputIkCtlName.setPlaceholderText("指定するIKコントローラーの名前を入力 又はドラッグ")
         self.layout.addWidget(self.inputIkCtlName)
+
+        #FKとIKのブレンド率調整用のコントローラーの指定
+        self.inputSwitchCtlName = qw.QLineEdit()
+        self.inputSwitchCtlName.setPlaceholderText("指定するブレンド率のコントローラーの名前を入力 又はドラッグ")
+        self.layout.addWidget(self.inputSwitchCtlName)
 
         #コントローラーをエクスプローラーから参照ボタン
         self.referenceFkButton = qw.QPushButton("FK用コントローラーをaiファイルからインポートして参照")
         self.referenceIkButton = qw.QPushButton("IK用コントローラーをaiファイルからインポートして参照")
+        self.referenceSwitchButton = qw.QPushButton("ブレンド率の調整用コントローラーをaiファイルからインポートして参照")
 
         #実行ボタン
         self.createButton = qw.QPushButton("create FK,IK,MID")
@@ -231,16 +236,19 @@ class guiWindow(qw.QDialog):
         self.layout.addWidget(self.explain)
         self.layout.addWidget(self.referenceFkButton)
         self.layout.addWidget(self.referenceIkButton)
+        self.layout.addWidget(self.referenceSwitchButton)
         self.layout.addWidget(self.createButton)
 
-        self.referenceFkButton.clicked.connect(lambda: self.importByExplorer(True))
-        self.referenceIkButton.clicked.connect(lambda: self.importByExplorer(False))
+        self.referenceFkButton.clicked.connect(lambda: self.importByExplorer(0))
+        self.referenceIkButton.clicked.connect(lambda: self.importByExplorer(1))
+        self.referenceSwitchButton.clicked.connect(lambda: self.importByExplorer(2))
+
         self.createButton.clicked.connect(self.clickedCreateButton)
 
         
-    def importByExplorer(self, bool):
+    def importByExplorer(self, num):
         
-        if bool:
+        if num == 0:
             failFk = qw.QFileDialog.getOpenFileName(self, "FK:aiファイルを選択", "", "aiファイル(*.ai)")
             self.inputFkCtlName.setPlaceholderText("参照済み")
             pathNodeFk = cmds.file(failFk[0], i=True, type="Adobe(R) Illustrator(R)", returnNewNodes=True)
@@ -248,7 +256,7 @@ class guiWindow(qw.QDialog):
             baseNameFk = cmds.rename(pathNodeFk[0],"Fk_Ctl_Base")
             self.inputFkCtlName.setText(baseNameFk)
 
-        else:
+        elif num == 1:
             failIk = qw.QFileDialog.getOpenFileName(self, "IK:aiファイルを選択", "", "aiファイル(*.ai)")
             self.inputIkCtlName.setPlaceholderText("参照済み")
             pathNodeIk = cmds.file(failIk[0], i=True, type="Adobe(R) Illustrator(R)", returnNewNodes=True)
@@ -256,10 +264,13 @@ class guiWindow(qw.QDialog):
             baseNameIk = cmds.rename(pathNodeIk[0],"Ik_Ctl_Base")
             self.inputIkCtlName.setText(baseNameIk)
         
-        
+        else:
+            failSwitch = qw.QFileDialog.getOpenFileName(self, "Switch:aiファイルを選択", "", "aiファイル(*.ai)")
+            self.inputSwitchCtlName.setPlaceholderText("参照済み")
+            pathNodeSwitch = cmds.file(failSwitch[0], i=True, type="Adobe(R) Illustrator(R)", returnNewNodes=True)
 
-        
-        
+            nameSwitch = cmds.rename(pathNodeSwitch[0],"blendSwitch_Ctl")
+            self.inputSwitchCtlName.setText(nameSwitch)
         
         
     def clickedCreateButton(self):
@@ -267,7 +278,7 @@ class guiWindow(qw.QDialog):
         cmds.undoInfo(openChunk=True)
 
         try:
-            self.logicClass(self.inputFkCtlName.text(), self.inputIkCtlName.text()).doIt(None)
+            self.logicClass(self.inputFkCtlName.text(), self.inputIkCtlName.text(),self.inputSwitchCtlName.text()).doIt(None)
 
         
         except Exception:
