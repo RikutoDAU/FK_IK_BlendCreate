@@ -182,7 +182,7 @@ class FK_IK_BlendRigCreate(om.MPxCommand):
 
         #cmds.deleteUI(guiWindow.windowName, window=True)
 
-        cmds.undoInfo(closeChunk=True)
+        #cmds.undoInfo(closeChunk=True)
         return self.jointFK, self.jointIK, self.jointMID
     
 class guiWindow(qw.QDialog):
@@ -261,10 +261,21 @@ class guiWindow(qw.QDialog):
         
         cmds.undoInfo(openChunk=True)
 
-        #self.logicClass(self.inputFkCtlName.text(), self.inputIkCtlName.text()).doIt(None)
-        self.logicClass(self.inputFkCtlName.text(), self.inputIkCtlName.text()).doIt(None)
+        try:
+            #self.logicClass(self.inputFkCtlName.text(), self.inputIkCtlName.text()).doIt(None)
+            self.logicClass(self.inputFkCtlName.text(), self.inputIkCtlName.text()).doIt(None)
 
-        self.close()
+        except Exception:
+            cmds.undoInfo(closeChunk=True)
+            cmds.undo()
+            print("エラーが発生", Exception)
+
+        finally:
+            self.close()
+            cmds.undoInfo(closeChunk=True)
+            
+
+        
        
 
 #FK_IK_BlendRigCreate().doIt(None)
