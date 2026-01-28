@@ -1,17 +1,11 @@
-import maya.api.OpenMaya as om
 import maya.cmds as cmds
 
 from PySide6 import QtWidgets as qw ,QtCore as qc
 
-# API2.0 を有効にする
-def maya_useNewAPI():
-    pass
-
 #機能クラス
-class FK_IK_BlendRigCreate(om.MPxCommand):
+class FK_IK_BlendRigCreate():
 
     def __init__(self, fkCtlName, ikCtlName, swicthCtlName):
-        super().__init__()
 
         #元のジョイントに追加される名前
         self.plusNameList = ["FK","IK","Mid"]
