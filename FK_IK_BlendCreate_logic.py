@@ -1,4 +1,5 @@
 import maya.cmds as cmds
+import traceback
 
 #機能クラス
 class FK_IK_BlendRigCreate():
@@ -20,6 +21,9 @@ class FK_IK_BlendRigCreate():
         self.ikCTL = ikCtlName
 
         self.switchCTL = swicthCtlName
+
+        #kコントローラー指定がなかった場合用、作成されたデフォルトコントローラーリスト
+        self.defaultCtlList = []
 
     #選択中の2つのジョイントの親→子を返す。選択が1つならそのジョイントのみ。
     def getSelectJoint(self):
@@ -82,6 +86,11 @@ class FK_IK_BlendRigCreate():
             #名前はFK,IK,MIDを見分けれるように変更。
             newName = cmds.rename(copyJnt, self.chainList[i] + "_" + pulsName)
 
+            #元のジョイントとの親子階層を解除
+            currentParent = cmds.listRelatives(newName, parent=True)
+            if currentParent:
+                cmds.parent(newName, world=True)
+
             #親階層化する。
             if len(newChainList) > 0:
                 cmds.parent(newName, newChainList[i - 1], relative=True)
@@ -100,8 +109,13 @@ class FK_IK_BlendRigCreate():
 
         #IkHandle作成。
         ikHandle = cmds.ikHandle(startJoint = startJointIK, endEffector = endJointIK , solver="ikRPsolver", name = self.jointIK[0] + "_IKhandle")[0]
+
+        #コントローラーの指定がない場合はデフォルト用を割り当て
+        if not ikCtl:
+            ikCtl = self.createCurveCtl(formType="Square")
+            #ikCtl = self.squareCtlBase
         
-        #指定されたコントローラーが存在しなけれな中断。
+        #指定されたコントローラーが存在しなければ中断。
         if not cmds.objExists(ikCtl):
             cmds.error(ikCtl,"が存在しません")
     
@@ -119,7 +133,12 @@ class FK_IK_BlendRigCreate():
 
         fkCtl = self.fkCTL
 
-        #指定されたコントローラーが存在しなけれな中断。
+        #コントローラーの指定がない場合はデフォルト用を割り当て
+        if not fkCtl:
+            fkCtl = self.createCurveCtl(formType="Diamond")
+            #fkCtl = self.diamondCtlBase
+
+        #指定されたコントローラーが存在しなければ中断。
         if not cmds.objExists(fkCtl):
             cmds.error(fkCtl,"が存在しません")
 
@@ -184,7 +203,39 @@ class FK_IK_BlendRigCreate():
             cmds.setAttr(jnt+".translate",0,0,0)
             cmds.setAttr(jnt+".rotate",0,0,0)
             cmds.setAttr(jnt+".jointOrient",0,0,0)
+
+    def createSquareCurve(self):
+        points = [(-1, 0, 1), (1, 0, 1), (1, 0, -1), (-1, 0, -1), (-1, 0, 1)]
+        self.squareCtlBase = cmds.curve(n="SquareCtlBase", d=1, p=points)
+
+        #角度調整
+        cmds.rotate(0,90,0,self.squareCtlBase , relative = True)
+        cmds.makeIdentity(self.squareCtlBase, apply = True, rotate= True)
+
+    def createDiamondCurve(self):
+        points = [(0, 1, 0), (-1, 0, 0), (0, -1, 0), (1, 0, 0), (0, 1, 0)]
+        self.diamondCtlBase = cmds.curve(n="DiamondCtlBase", d=1, p=points)
         
+        #角度調整
+        cmds.rotate(0,90,0,self.diamondCtlBase , relative = True)
+        cmds.makeIdentity(self.diamondCtlBase, apply = True, rotate= True)
+
+    def createCurveCtl(self, formType):
+        match formType:
+            case "Square":
+                self.createSquareCurve()
+                self.defaultCtlList.append(self.squareCtlBase)
+                return self.squareCtlBase
+            
+            case "Diamond":
+                self.createDiamondCurve()
+                self.defaultCtlList.append(self.diamondCtlBase)
+                return self.diamondCtlBase
+            
+            case _:
+                print("形状が選ばれていないか、存在していない")
+                
+            
         
 
     def doIt(self):        
@@ -213,5 +264,8 @@ class FK_IK_BlendRigCreate():
 
         #FKとIKをブレンドしてMIDに反映。
         self.fkIkblend()
+
+        if self.defaultCtlList:
+            cmds.delete(self.defaultCtlList)
 
         return
