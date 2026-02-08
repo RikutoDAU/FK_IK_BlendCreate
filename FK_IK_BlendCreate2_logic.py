@@ -96,7 +96,7 @@ class FK_IK_BlendRigCreate():
         
         #指定されたコントローラーが存在しなければ中断。
         if not cmds.objExists(ikCtl):
-            cmds.error(ikCtl,"が存在しません")
+            cmds.error("IK用コントローラーが存在しません")
     
         #指定されたコントローラーを複製して、group化に入れることでコントローラーの位置や回転の初期値を0にする。
         copyCtl = cmds.duplicate(ikCtl, name=endJointIK + "_CTL")[0]
@@ -118,12 +118,10 @@ class FK_IK_BlendRigCreate():
             #コントローラーの指定がない場合はデフォルト用を割り当て
             if not fkCtlList[i]:
                 fkCtlList[i] = self.createCurveCtl(formType="Diamond")
-                #fkCtl = self.diamondCtlBase
 
             #指定されたコントローラーが存在しなければ中断。
             if not cmds.objExists(fkCtlList[i]):
-                cmds.error(fkCtlList[i],"が存在しません")
-
+                cmds.error(i + "番目のFK用コントローラーが存在しません")
             
             #指定されたコントローラーを複製して、group化に入れることでコントローラーの位置や回転の初期値を0にする。
             jointFkCnt = cmds.duplicate(fkCtlList[i], name=jnt  + "_CTL")[0]
@@ -145,9 +143,13 @@ class FK_IK_BlendRigCreate():
     #複製されたFK,IKのジョイントの行列をブレンドさせてMIDに与える。
     def fkIkblend(self, jointFK: list, jointIK: list, jointMID: list, switchCTL):
 
+        #コントローラーの指定がない場合はデフォルト用を割り当て
+        if not switchCTL:
+            switchCTL = self.createCurveCtl("locator")
+
         #指定されたコントローラーが存在しなけれな中断。
         if not cmds.objExists(switchCTL):
-            cmds.error(switchCTL,"が存在しません")
+            cmds.error("ブレンドスイッチ用コントローラーが存在しません")
         
         for i, jnt in enumerate(jointMID):
             
@@ -178,6 +180,7 @@ class FK_IK_BlendRigCreate():
             cmds.setAttr(jnt+".rotate",0,0,0)
             cmds.setAttr(jnt+".jointOrient",0,0,0)
 
+    #四角形のカーブ生成
     def createSquareCurve(self):
         points = [(-1, 0, 1), (1, 0, 1), (1, 0, -1), (-1, 0, -1), (-1, 0, 1)]
         self.squareCtlBase = cmds.curve(n="SquareCtlBase", d=1, p=points)
@@ -186,6 +189,7 @@ class FK_IK_BlendRigCreate():
         cmds.rotate(0,90,0,self.squareCtlBase , relative = True)
         cmds.makeIdentity(self.squareCtlBase, apply = True, rotate= True)
 
+    #ひし形のカーブ生成
     def createDiamondCurve(self):
         points = [(0, 1, 0), (-1, 0, 0), (0, -1, 0), (1, 0, 0), (0, 1, 0)]
         self.diamondCtlBase = cmds.curve(n="DiamondCtlBase", d=1, p=points)
@@ -194,6 +198,7 @@ class FK_IK_BlendRigCreate():
         cmds.rotate(0,90,0,self.diamondCtlBase , relative = True)
         cmds.makeIdentity(self.diamondCtlBase, apply = True, rotate= True)
 
+    #デフォルト用コントローラーを指定に沿って作成+リスト格納
     def createCurveCtl(self, formType):
         match formType:
             case "Square":
@@ -206,8 +211,12 @@ class FK_IK_BlendRigCreate():
                 self.defaultCtlList.append(self.diamondCtlBase)
                 return self.diamondCtlBase
             
+            case "locator":
+                defaultCtl = cmds.spaceLocator(name="BlendSwitchCtl")[0]
+                return defaultCtl
+            
             case _:
-                print("形状が選ばれていないか、存在していない")      
+                print("形状が選ばれていないか、存在していない")    
 
     def doByGui(self , fkCtlName , ikCtlName , swicthCtlName , chainList):  
 
