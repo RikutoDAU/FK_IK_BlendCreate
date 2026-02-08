@@ -9,19 +9,6 @@ class FK_IK_BlendRigCreate():
         #元のジョイントに追加される名前
         self.plusNameList = ["FK","IK","Mid"]
 
-        #格納用リスト
-        #self.chainList = []
-
-        #self.jointFK = []
-        #self.jointIK = []
-        #self.jointMID = []
-
-        #指定されたコントローラーを割り当て
-        #self.fkCTL = fkCtlName
-        #self.ikCTL = ikCtlName
-
-        #self.switchCTL = swicthCtlName
-
         #kコントローラー指定がなかった場合用、作成されたデフォルトコントローラーリスト
         self.defaultCtlList = []
 
@@ -74,33 +61,6 @@ class FK_IK_BlendRigCreate():
         print("指定ジョイント" , self.chainList)
         return  chain
     
-    #修正前比較用
-    '''   
-    def duplicateJoint(self,pulsName):
-
-        newChainList = []
-
-        #指定されたジョイントのリスト内の親→子の順に複製。
-        for i in range(len(self.chainList)):
-            copyJnt = cmds.duplicate(self.chainList[i], po=True)[0]
-
-            #名前はFK,IK,MIDを見分けれるように変更。
-            newName = cmds.rename(copyJnt, self.chainList[i] + "_" + pulsName)
-
-            #元のジョイントとの親子階層を解除
-            currentParent = cmds.listRelatives(newName, parent=True)
-            if currentParent:
-                cmds.parent(newName, world=True)
-
-            #親階層化する。
-            if len(newChainList) > 0:
-                cmds.parent(newName, newChainList[i - 1], relative=True)
-
-            newChainList.append(newName)
-
-        print("新しいジョイントリスト" , newChainList)
-        return newChainList
-    '''
     #FK,IK,MID用にジョイントを複製する。引数で指定された1種のタイプのみ複製。
     def duplicateJoint(self,pulsName, chainList):
 
@@ -124,7 +84,6 @@ class FK_IK_BlendRigCreate():
     #IkHandleとそのコントローラーの作成。
     def ikHandleCtlCreate(self, jointIK:list, ikCtl):
 
-        #ikCtl = self.ikCTL
         startJointIK = jointIK[0]
         endJointIK = jointIK[-1]
 
@@ -134,7 +93,6 @@ class FK_IK_BlendRigCreate():
         #コントローラーの指定がない場合はデフォルト用を割り当て
         if not ikCtl:
             ikCtl = self.createCurveCtl(formType="Square")
-            #ikCtl = self.squareCtlBase
         
         #指定されたコントローラーが存在しなければ中断。
         if not cmds.objExists(ikCtl):
@@ -151,9 +109,6 @@ class FK_IK_BlendRigCreate():
 
     #FKジョイントのコントローラーの作成。
     def fkCtlCreate(self, jointFK:list, fkCtlList:list):
-
-        #fkCtlList = self.fkCTL
-
 
         #コントローラーの1つ前のループで作成されたコントローラーを変数に保存。
         beforeCnt = None        
@@ -189,14 +144,10 @@ class FK_IK_BlendRigCreate():
 
     #複製されたFK,IKのジョイントの行列をブレンドさせてMIDに与える。
     def fkIkblend(self, jointFK: list, jointIK: list, jointMID: list, switchCTL):
-        
-        #FKとIKのブレンド率を調整するコントローラー(switch)。
-        #switchCTL = self.switchCTL
 
         #指定されたコントローラーが存在しなけれな中断。
         if not cmds.objExists(switchCTL):
             cmds.error(switchCTL,"が存在しません")
-
         
         for i, jnt in enumerate(jointMID):
             
@@ -256,24 +207,9 @@ class FK_IK_BlendRigCreate():
                 return self.diamondCtlBase
             
             case _:
-                print("形状が選ばれていないか、存在していない")
-                
-            
-        
+                print("形状が選ばれていないか、存在していない")      
 
-    def doByGui(self , fkCtlName , ikCtlName , swicthCtlName , chainList): 
-
-        
-        #self.chainList = chainList    
-        #self.createChainList()
-        #指定されたコントローラーを割り当て
-        #self.fkCTL = fkCtlName
-        #self.ikCTL = ikCtlName
-
-        #self.switchCTL = swicthCtlName
-
-        #指定したジョイントの親子階層順のリストを作成。
-        
+    def doByGui(self , fkCtlName , ikCtlName , swicthCtlName , chainList):  
 
         #FK,IK,MIDごとにジョイントを複製。
         fkName, ikName, midName, *extra = self.plusNameList
