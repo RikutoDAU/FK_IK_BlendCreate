@@ -3,22 +3,8 @@ import maya.cmds as cmds
 from PySide6 import QtWidgets as qw ,QtCore as qc
 import importlib
 
-import sys
-import os
-'''
-failPath = __file__
-folderPath = os.path.dirname(failPath)
-sys.path.append(folderPath)
-
-try:
-    import FK_IK_MID_RigCreate_Logic as logic
-    importlib.reload(logic)
-except ImportError:
-    cmds.error("FK_IK_MID_RigCreate_Logic が見つかりません。")
-'''
-
+#ロジックファイルのインポート
 import FK_IK_MID_RigCreate_Logic as logic
-import importlib
 importlib.reload(logic)
 
 #GUI用クラス
