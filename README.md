@@ -1,5 +1,14 @@
 # FK_IK_BlendCreate
 
---指定したジョイントのFKとIK、とそれをブレンドするジョイントの計3つのジョイントを複製するツール。
+*指定したジョイントのFKとIK、とそれをブレンドするジョイントの計3つのジョイント+それらのコントローラーを生成するツール。<br>
+*maya2025以降のversionに対応。(pySide6を使用している関係)<br>
 
---現状は作成中。構想としては選択した親ジョイントと子ジョイント間のFK,IK,blendを作成してくれるものを想定。
+*実装方法<br>
+_logic.pyファイルを'C:\Users\"ユーザーの名前など"\Documents\maya\2025\ja_JP\scripts'の元に置く。<br>
+
+*使用方法
+mayaでFK,IK,Blendジョイント分を生成したいジョイント間を親→子の順に選択。(CTRL + LeftClick)<br>
+_GUI.pyのスクリプトをMAYAのスクリプトエディタにコピペやシェルフに登録して呼び出す。<br>
+<img width="456" height="445" alt="image" src="https://github.com/user-attachments/assets/a5c5b5ee-f298-4dab-8fe3-b51135af75e2" /><br>
+
+画像のようなウィンドウが出るため、その説明通りに使用。<br>
