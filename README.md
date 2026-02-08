@@ -4,7 +4,8 @@
 *maya2025以降のversionに対応。(pySide6を使用している関係)<br>
 
 *実装方法<br>
-_logic.pyファイルを'C:\Users\"ユーザーの名前など"\Documents\maya\2025\ja_JP\scripts'の元に置く。<br>
+_logic.pyファイルをMayaが標準で参照するスクリプトのディレクトリの元に置く。<br>
+基本例)'C:\Users\%USERNAME%\Documents\maya\2025\ja_JP\scripts'<br>
 
 *使用方法
 mayaでFK,IK,Blendジョイント分を生成したいジョイント間を親→子の順に選択。(CTRL + LeftClick)<br>
