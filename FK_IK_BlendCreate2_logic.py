@@ -4,23 +4,23 @@ import traceback
 #機能クラス
 class FK_IK_BlendRigCreate():
 
-    def __init__(self, fkCtlName = None, ikCtlName = None, swicthCtlName = None):
+    def __init__(self):
 
         #元のジョイントに追加される名前
         self.plusNameList = ["FK","IK","Mid"]
 
         #格納用リスト
-        self.chainList = []
+        #self.chainList = []
 
-        self.jointFK = []
-        self.jointIK = []
-        self.jointMID = []
+        #self.jointFK = []
+        #self.jointIK = []
+        #self.jointMID = []
 
         #指定されたコントローラーを割り当て
-        self.fkCTL = fkCtlName
-        self.ikCTL = ikCtlName
+        #self.fkCTL = fkCtlName
+        #self.ikCTL = ikCtlName
 
-        self.switchCTL = swicthCtlName
+        #self.switchCTL = swicthCtlName
 
         #kコントローラー指定がなかった場合用、作成されたデフォルトコントローラーリスト
         self.defaultCtlList = []
@@ -72,9 +72,10 @@ class FK_IK_BlendRigCreate():
         
         self.chainList = chain
         print("指定ジョイント" , self.chainList)
-        return  self.chainList
-
-    #FK,IK,MID用にジョイントを複製する。引数で指定された1種のタイプのみ複製。
+        return  chain
+    
+    #修正前比較用
+    '''   
     def duplicateJoint(self,pulsName):
 
         newChainList = []
@@ -99,16 +100,36 @@ class FK_IK_BlendRigCreate():
 
         print("新しいジョイントリスト" , newChainList)
         return newChainList
+    '''
+    #FK,IK,MID用にジョイントを複製する。引数で指定された1種のタイプのみ複製。
+    def duplicateJoint(self,pulsName, chainList):
+
+        newChainList = []
+        
+        #指定されたジョイントのリスト内の親→子の順に複製。
+        for i in range(len(chainList)):
+            copyJnt = cmds.duplicate(chainList[i], po=True)[0]
+
+            #名前はFK,IK,MIDを見分けれるように変更。
+            newName = cmds.rename(copyJnt, chainList[i] + "_" + pulsName)
+
+            if len(newChainList) > 0:
+                cmds.parent(newName, newChainList[i - 1], relative=True)
+
+            newChainList.append(newName)
+
+        print("新しいジョイントリスト" , newChainList)
+        return newChainList
     
     #IkHandleとそのコントローラーの作成。
-    def ikHandleCtlCreate(self):
+    def ikHandleCtlCreate(self, jointIK:list, ikCtl):
 
-        ikCtl = self.ikCTL
-        startJointIK = self.jointIK[0]
-        endJointIK = self.jointIK[-1]
+        #ikCtl = self.ikCTL
+        startJointIK = jointIK[0]
+        endJointIK = jointIK[-1]
 
         #IkHandle作成。
-        ikHandle = cmds.ikHandle(startJoint = startJointIK, endEffector = endJointIK , solver="ikRPsolver", name = self.jointIK[0] + "_IKhandle")[0]
+        ikHandle = cmds.ikHandle(startJoint = startJointIK, endEffector = endJointIK , solver="ikRPsolver", name = jointIK[0] + "_IKhandle")[0]
 
         #コントローラーの指定がない場合はデフォルト用を割り当て
         if not ikCtl:
@@ -129,15 +150,15 @@ class FK_IK_BlendRigCreate():
         cmds.parent(ikHandle,copyCtl)
 
     #FKジョイントのコントローラーの作成。
-    def fkCtlCreate(self):
+    def fkCtlCreate(self, jointFK:list, fkCtlList:list):
 
-        fkCtlList = self.fkCTL
+        #fkCtlList = self.fkCTL
 
 
         #コントローラーの1つ前のループで作成されたコントローラーを変数に保存。
         beforeCnt = None        
 
-        for i, jnt in enumerate(self.jointFK):
+        for i, jnt in enumerate(jointFK):
 
             #コントローラーの指定がない場合はデフォルト用を割り当て
             if not fkCtlList[i]:
@@ -167,25 +188,25 @@ class FK_IK_BlendRigCreate():
             beforeCnt = jointFkCnt
 
     #複製されたFK,IKのジョイントの行列をブレンドさせてMIDに与える。
-    def fkIkblend(self):
+    def fkIkblend(self, jointFK: list, jointIK: list, jointMID: list, switchCTL):
         
         #FKとIKのブレンド率を調整するコントローラー(switch)。
-        switchCTL = self.switchCTL
+        #switchCTL = self.switchCTL
 
         #指定されたコントローラーが存在しなけれな中断。
         if not cmds.objExists(switchCTL):
             cmds.error(switchCTL,"が存在しません")
 
         
-        for i, jnt in enumerate(self.jointMID):
+        for i, jnt in enumerate(jointMID):
             
             #blendMatrixノードを用いてFK,IKの行列をMIDに与える。
             bmNode = cmds.createNode('blendMatrix', name=jnt + "_bm")
 
             #FK,IKの行列をブレンドさせてMIDに与える。
-            cmds.connectAttr(self.jointFK[i] + ".matrix", bmNode + ".inputMatrix")
-            cmds.connectAttr(self.jointIK[i] + ".matrix", bmNode + ".target[0].targetMatrix")
-            cmds.connectAttr(bmNode + ".outputMatrix", self.jointMID[i] + ".offsetParentMatrix")
+            cmds.connectAttr(jointFK[i] + ".matrix", bmNode + ".inputMatrix")
+            cmds.connectAttr(jointIK[i] + ".matrix", bmNode + ".target[0].targetMatrix")
+            cmds.connectAttr(bmNode + ".outputMatrix", jointMID[i] + ".offsetParentMatrix")
 
             #switchコントローラーに追加される属性の名前。
             attrName = jnt + "IKratio"
@@ -243,38 +264,30 @@ class FK_IK_BlendRigCreate():
     def doByGui(self , fkCtlName , ikCtlName , swicthCtlName , chainList): 
 
         
-        self.chainList = chainList    
-        self.createChainList()
+        #self.chainList = chainList    
+        #self.createChainList()
         #指定されたコントローラーを割り当て
-        self.fkCTL = fkCtlName
-        self.ikCTL = ikCtlName
+        #self.fkCTL = fkCtlName
+        #self.ikCTL = ikCtlName
 
-        self.switchCTL = swicthCtlName
+        #self.switchCTL = swicthCtlName
 
         #指定したジョイントの親子階層順のリストを作成。
         
 
         #FK,IK,MIDごとにジョイントを複製。
-        for i,plusNames in enumerate(self.plusNameList):
+        fkName, ikName, midName, *extra = self.plusNameList
 
-            if i == 0:
-                self.jointFK = self.duplicateJoint(plusNames)
-
-            elif i == 1:
-                self.jointIK = self.duplicateJoint(plusNames)
-            
-            elif i == 2:
-                self.jointMID = self.duplicateJoint(plusNames)
-            
-            else:
-                break
+        jointFK  = self.duplicateJoint(fkName,chainList )
+        jointIK  = self.duplicateJoint(ikName,chainList )
+        jointMID = self.duplicateJoint(midName,chainList )
         
         #コントローラーの作成。
-        self.ikHandleCtlCreate()
-        self.fkCtlCreate()
+        self.ikHandleCtlCreate(jointIK, ikCtlName)
+        self.fkCtlCreate(jointFK, fkCtlName)
 
         #FKとIKをブレンドしてMIDに反映。
-        self.fkIkblend()
+        self.fkIkblend(jointFK,jointIK,jointMID, swicthCtlName)
 
         if self.defaultCtlList:
             cmds.delete(self.defaultCtlList)
