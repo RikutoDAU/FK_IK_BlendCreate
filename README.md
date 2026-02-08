@@ -5,7 +5,7 @@
 
 *実装方法<br>
 FK_IK_BlendCreate2_logic.pyファイルをMayaが標準で参照するスクリプトのディレクトリの元に置く。<br>
-基本例)'C:\Users\%USERNAME%\Documents\maya\2025\ja_JP\scripts'<br>
+基本例)'C:\Users\%USERNAME%\Documents\maya\2025\ja_JP\scripts\FK_IK_BlendCreate2_logic.py'<br>
 
 *使用方法<br>
 mayaでFK,IK,Blendジョイント分を生成したいジョイント間を親→子の順に選択。(CTRL + LeftClick)<br>
