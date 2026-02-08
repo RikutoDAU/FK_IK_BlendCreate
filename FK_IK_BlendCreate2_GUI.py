@@ -27,7 +27,6 @@ class guiWindow(qw.QDialog):
 
         #表示する説明文
         explainText = (
-            "指定するジョイント間を親→子の順で2つ選択(CTRL + L_Click)\n"
             "illustratorから追加するコントローラーのサイズはインポート後にcreateする前に調整してください。\n"
             "コントローラーの指定がない場合は自動でDefault用で生成されます"
             )
