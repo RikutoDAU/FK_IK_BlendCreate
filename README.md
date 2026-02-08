@@ -7,7 +7,7 @@
 _logic.pyファイルをMayaが標準で参照するスクリプトのディレクトリの元に置く。<br>
 基本例)'C:\Users\%USERNAME%\Documents\maya\2025\ja_JP\scripts'<br>
 
-*使用方法
+*使用方法<br>
 mayaでFK,IK,Blendジョイント分を生成したいジョイント間を親→子の順に選択。(CTRL + LeftClick)<br>
 _GUI.pyのスクリプトをMAYAのスクリプトエディタにコピペやシェルフに登録して呼び出す。<br>
 <img width="456" height="445" alt="image" src="https://github.com/user-attachments/assets/a5c5b5ee-f298-4dab-8fe3-b51135af75e2" /><br>
