@@ -13,3 +13,4 @@ FK_IK_BlendCreate2_GUI.pyのスクリプトをMAYAのスクリプトエディタ
 <img width="456" height="445" alt="image" src="https://github.com/user-attachments/assets/a5c5b5ee-f298-4dab-8fe3-b51135af75e2" /><br>
 
 画像のようなウィンドウが出るため、その説明通りに使用。<br>
+コントローラーの指定が無く空欄である場合は、簡単な形状のコントローラーが生成されます。
